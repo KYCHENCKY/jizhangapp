@@ -93,7 +93,7 @@ def parse_alipay_csv(file_bytes: bytes) -> dict:
     # Extract date range from metadata
     date_start, date_end = None, None
     full_text = "\n".join(lines[:header_idx])
-    m = re.search(r"起始时间.*?\[([\d-]+)\].*?终止时间.*?\[([\d-]+)\]", full_text, re.DOTALL)
+    m = re.search(r"起始时间.*?\[([\d-]+).*?\].*?终止时间.*?\[([\d-]+).*?\]", full_text, re.DOTALL)
     if m:
         date_start = m.group(1)
         date_end = m.group(2)

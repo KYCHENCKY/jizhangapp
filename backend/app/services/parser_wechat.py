@@ -48,7 +48,7 @@ def parse_wechat_xlsx(file_bytes: bytes) -> dict:
     # Scan first 30 rows for header and date range
     for row_idx, row in enumerate(ws.iter_rows(min_row=1, max_row=30, max_col=16, values_only=True), start=1):
         line = " ".join(str(c) for c in row if c)
-        m = re.search(r"起始时间.*?\[([\d-]+)\].*?终止时间.*?\[([\d-]+)\]", line)
+        m = re.search(r"起始时间.*?\[([\d-]+).*?\].*?终止时间.*?\[([\d-]+).*?\]", line)
         if m:
             date_start = m.group(1)
             date_end = m.group(2)
