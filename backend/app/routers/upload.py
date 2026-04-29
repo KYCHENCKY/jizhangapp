@@ -51,13 +51,17 @@ def _remove_preview(batch_id: int):
         os.remove(path)
 
 
-def _dedup(db: Session, txn_list: list[dict], platform: str) -> list[dict]:
+def _dedup(db: Session, txn_list: list[dict], platform: str, user_id: int) -> list[dict]:
     source_ids = [t["source_txn_id"] for t in txn_list if t.get("source_txn_id")]
     if not source_ids:
         return list(txn_list)
     existing = (
         db.query(Transaction.source_txn_id)
-        .filter(Transaction.source_platform == platform, Transaction.source_txn_id.in_(source_ids))
+        .filter(
+            Transaction.source_platform == platform,
+            Transaction.source_txn_id.in_(source_ids),
+            Transaction.user_id == user_id,
+        )
         .all()
     )
     existing_ids = {r[0] for r in existing}
@@ -89,7 +93,7 @@ def _process_upload(file: UploadFile, platform: str, parse_fn, db: Session, file
     if not txn_list:
         raise HTTPException(400, "未从文件中解析到任何交易记录，请确认文件格式正确")
 
-    new_txns = _dedup(db, txn_list, platform)
+    new_txns = _dedup(db, txn_list, platform, user_id)
 
     batch = ImportBatch(
         filename=safe_name,
@@ -140,29 +144,49 @@ def confirm_import(req: ConfirmImportRequest, db: Session = Depends(get_db),
     if not txns:
         raise HTTPException(400, "没有待确认的交易记录，请重新上传文件")
 
-    # Re-dedup at confirm time to avoid unique constraint violations
-    existing_ids = set(
-        r[0] for r in db.query(Transaction.source_txn_id).filter(
-            Transaction.source_platform == batch.source_platform,
-            Transaction.source_txn_id.in_([t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]),
-        ).all()
-    )
-    new_txns = [t for t in txns if not t.get("source_txn_id") or t["source_txn_id"] not in existing_ids]
+    # Re-dedup at confirm time: check DB + within-batch duplicates
+    seen_ids: set[str] = set()
+    new_txns: list[dict] = []
+    all_source_ids = [t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]
+    existing_ids: set[str] = set()
+    if all_source_ids:
+        existing_ids = set(
+            r[0] for r in db.query(Transaction.source_txn_id).filter(
+                Transaction.source_platform == batch.source_platform,
+                Transaction.source_txn_id.in_(all_source_ids),
+                Transaction.user_id == current_user.id,
+            ).all()
+        )
+    for t_data in txns:
+        sid = t_data.get("source_txn_id", "")
+        if sid and (sid in existing_ids or sid in seen_ids):
+            continue
+        if sid:
+            seen_ids.add(sid)
+        new_txns.append(t_data)
 
     categorized = 0
     for t_data in new_txns:
         t_data.pop("transaction_time_display", None)
-        txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
-        db.add(txn)
-        db.flush()
-        cat_id = auto_categorize(db, txn)
-        if cat_id is not None:
-            txn.category_id = cat_id
-            categorized += 1
+        try:
+            txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
+            db.add(txn)
+            db.flush()
+            cat_id = auto_categorize(db, txn)
+            if cat_id is not None:
+                txn.category_id = cat_id
+                categorized += 1
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(500, f"导入交易记录失败: {e}")
 
     batch.new_count = len(new_txns)
     batch.dup_count = batch.record_count - len(new_txns)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"保存交易记录失败（可能是重复导入）: {e}")
 
     _remove_preview(req.batch_id)
 
@@ -191,28 +215,41 @@ def confirm_all_imports(req: ConfirmAllRequest, db: Session = Depends(get_db),
             errors.append(f"批次 {batch_id} 没有待确认的交易记录")
             continue
 
-        # Re-dedup at confirm time
-        source_ids = [t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]
-        existing_ids = set()
-        if source_ids:
+        # Re-dedup at confirm time: check DB + within-batch duplicates
+        seen_ids: set[str] = set()
+        new_txns: list[dict] = []
+        all_source_ids = [t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]
+        existing_ids: set[str] = set()
+        if all_source_ids:
             existing_ids = set(
                 r[0] for r in db.query(Transaction.source_txn_id).filter(
                     Transaction.source_platform == batch.source_platform,
-                    Transaction.source_txn_id.in_(source_ids),
+                    Transaction.source_txn_id.in_(all_source_ids),
+                    Transaction.user_id == current_user.id,
                 ).all()
             )
-        new_txns = [t for t in txns if not t.get("source_txn_id") or t["source_txn_id"] not in existing_ids]
+        for t_data in txns:
+            sid = t_data.get("source_txn_id", "")
+            if sid and (sid in existing_ids or sid in seen_ids):
+                continue
+            if sid:
+                seen_ids.add(sid)
+            new_txns.append(t_data)
 
         categorized = 0
         for t_data in new_txns:
             t_data.pop("transaction_time_display", None)
-            txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
-            db.add(txn)
-            db.flush()
-            cat_id = auto_categorize(db, txn)
-            if cat_id is not None:
-                txn.category_id = cat_id
-                categorized += 1
+            try:
+                txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
+                db.add(txn)
+                db.flush()
+                cat_id = auto_categorize(db, txn)
+                if cat_id is not None:
+                    txn.category_id = cat_id
+                    categorized += 1
+            except Exception as e:
+                db.rollback()
+                raise HTTPException(500, f"导入交易记录失败: {e}")
 
         batch.new_count = len(new_txns)
         batch.dup_count = batch.record_count - len(new_txns)
@@ -220,7 +257,11 @@ def confirm_all_imports(req: ConfirmAllRequest, db: Session = Depends(get_db),
         total_categorized += categorized
         _remove_preview(batch_id)
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"保存交易记录失败（可能是重复导入）: {e}")
 
     result = {"new_count": total_new, "categorized": total_categorized}
     if errors:

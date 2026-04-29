@@ -127,6 +127,6 @@ class Transaction(Base):
     import_batch = relationship("ImportBatch", back_populates="transactions")
 
     __table_args__ = (
-        Index("idx_txn_dedup", "source_platform", "source_txn_id", unique=True,
+        Index("idx_txn_dedup", "source_platform", "source_txn_id", "user_id", unique=True,
               sqlite_where=source_txn_id != ""),
     )
