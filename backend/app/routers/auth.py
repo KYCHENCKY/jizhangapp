@@ -145,6 +145,8 @@ def update_user(
     if not user:
         raise HTTPException(404, "用户不存在")
     if is_active is not None:
+        if not is_active and user_id == admin.id:
+            raise HTTPException(400, "不能禁用自己的账户")
         user.is_active = 1 if is_active else 0
     db.commit()
     return ApiResponse(message="更新成功")

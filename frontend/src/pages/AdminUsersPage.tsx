@@ -1,11 +1,13 @@
-import { Table, Tag, Button, Popconfirm, message, Switch } from "antd";
+import { Table, Tag, Button, Popconfirm, message, Switch, Tooltip } from "antd";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "../api/auth";
+import { useAuth } from "../hooks/useAuth";
 import { formatDateTime } from "../utils/formatters";
 import type { User } from "../types";
 
 export default function AdminUsersPage() {
   const qc = useQueryClient();
+  const { user: currentUser } = useAuth();
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => api.fetchUsers().then(r => r.data),
@@ -33,18 +35,34 @@ export default function AdminUsersPage() {
     },
     {
       title: "状态", dataIndex: "is_active",
-      render: (v: boolean, r: User) => (
-        <Switch checked={v} onChange={(checked) => toggleMutation.mutate({ id: r.id, is_active: checked })} />
-      ),
+      render: (v: boolean, r: User) => {
+        const isSelf = r.id === currentUser?.id;
+        return (
+          <Tooltip title={isSelf ? "不能禁用自己的账户" : undefined}>
+            <Switch
+              checked={v}
+              disabled={isSelf}
+              onChange={(checked) => toggleMutation.mutate({ id: r.id, is_active: checked })}
+            />
+          </Tooltip>
+        );
+      },
     },
     { title: "注册时间", dataIndex: "created_at", render: (v: string) => formatDateTime(v) },
     {
       title: "操作",
-      render: (_: unknown, r: User) => (
-        <Popconfirm title="确定删除该用户？所有数据将被清除" onConfirm={() => deleteMutation.mutate(r.id)}>
-          <Button type="link" danger size="small">删除</Button>
-        </Popconfirm>
-      ),
+      render: (_: unknown, r: User) => {
+        const isSelf = r.id === currentUser?.id;
+        return (
+          <Popconfirm
+            title={isSelf ? "不能删除自己的账户" : "确定删除该用户？所有数据将被清除"}
+            disabled={isSelf}
+            onConfirm={() => deleteMutation.mutate(r.id)}
+          >
+            <Button type="link" danger size="small" disabled={isSelf}>删除</Button>
+          </Popconfirm>
+        );
+      },
     },
   ];
 
