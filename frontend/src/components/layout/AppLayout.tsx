@@ -12,6 +12,8 @@ import {
   SettingOutlined,
   LogoutOutlined,
   UserOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -37,47 +39,68 @@ export default function AppLayout() {
   return (
     <Layout style={{ minHeight: "100vh", background: "transparent" }}>
       <Sider
-        collapsible
         collapsed={collapsed}
-        onCollapse={setCollapsed}
+        trigger={null}
         width={200}
         style={{
-          background: "rgba(255,248,240,0.85)",
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 10,
+          background: "rgba(255,248,240,0.95)",
           backdropFilter: "blur(16px)",
           borderRight: "1px solid rgba(240,131,91,0.1)",
           boxShadow: "2px 0 16px rgba(240,131,91,0.06)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
+        {/* Logo + collapse toggle */}
         <div
           style={{
             height: 64,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            padding: collapsed ? undefined : "0 16px",
             color: "#f0835b",
-            fontSize: collapsed ? 16 : 20,
-            fontWeight: 700,
             borderBottom: "1px solid rgba(240,131,91,0.12)",
-            letterSpacing: collapsed ? 0 : 2,
+            flexShrink: 0,
           }}
         >
-          {collapsed ? "记账" : "记账助手"}
+          {!collapsed && (
+            <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: 2 }}>记账助手</span>
+          )}
+          <Button
+            type="text"
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={() => setCollapsed(!collapsed)}
+            style={{ fontSize: 16, color: "#8c7568" }}
+          />
         </div>
+
+        {/* Scrollable menu */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname === "/admin/users" ? "/admin/users" : location.pathname]}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
           style={{
+            flex: 1,
             background: "transparent",
             borderInlineEnd: "none",
             marginTop: 8,
+            overflow: "auto",
           }}
         />
+
+        {/* Fixed user area at bottom */}
         <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0,
           padding: collapsed ? "8px" : "12px 16px",
           borderTop: "1px solid #f0e4d8",
+          flexShrink: 0,
         }}>
           <Dropdown
             trigger={["click"]}
@@ -124,6 +147,10 @@ export default function AppLayout() {
           </Dropdown>
         </div>
       </Sider>
+
+      {/* Spacer for fixed sidebar */}
+      <div style={{ width: collapsed ? 80 : 200, flexShrink: 0, transition: "width 0.2s" }} />
+
       <Layout style={{ background: "transparent" }}>
         <Content
           style={{
