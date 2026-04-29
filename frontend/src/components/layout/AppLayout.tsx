@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Layout, Menu, theme, Button, Tag } from "antd";
+import { Layout, Menu, theme, Button, Tag, Dropdown, Avatar } from "antd";
 import {
   DashboardOutlined,
   UnorderedListOutlined,
@@ -9,6 +9,9 @@ import {
   AppstoreOutlined,
   ImportOutlined,
   TeamOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -75,18 +78,50 @@ export default function AppLayout() {
           position: "absolute", bottom: 0, left: 0, right: 0,
           padding: collapsed ? "8px" : "12px 16px",
           borderTop: "1px solid #f0e4d8",
-          display: "flex", alignItems: "center",
-          justifyContent: collapsed ? "center" : "space-between",
         }}>
-          {!collapsed && (
-            <span style={{ fontWeight: 500, color: "#4a3728", fontSize: 13 }}>
-              {user?.username}
-              {user?.is_admin && <Tag color="orange" style={{ marginLeft: 4, fontSize: 10 }}>管理员</Tag>}
-            </span>
-          )}
-          <Button type="text" size="small" danger onClick={logout}>
-            {collapsed ? "退" : "退出"}
-          </Button>
+          <Dropdown
+            trigger={["click"]}
+            placement="topLeft"
+            menu={{
+              items: [
+                { key: "settings", icon: <SettingOutlined />, label: "个人设置" },
+                ...(user?.is_admin ? [{ key: "admin", icon: <TeamOutlined />, label: "用户管理" }] : []),
+                { type: "divider" },
+                { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true },
+              ],
+              onClick: ({ key }) => {
+                if (key === "logout") logout();
+                else if (key === "settings") navigate("/settings");
+                else if (key === "admin") navigate("/admin/users");
+              },
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center",
+              gap: collapsed ? 0 : 8,
+              cursor: "pointer",
+              borderRadius: 12,
+              padding: collapsed ? "4px" : "6px 8px",
+              justifyContent: collapsed ? "center" : "flex-start",
+              transition: "background 0.2s",
+            }}>
+              <Avatar
+                size={collapsed ? 28 : 32}
+                icon={<UserOutlined />}
+                style={{ background: "#f0835b", flexShrink: 0 }}
+              />
+              {!collapsed && (
+                <div style={{ flex: 1, minWidth: 0, lineHeight: 1.3 }}>
+                  <div style={{ fontWeight: 600, color: "#4a3728", fontSize: 13 }}>
+                    {user?.username}
+                    {user?.is_admin && (
+                      <Tag color="orange" style={{ marginLeft: 4, fontSize: 10, lineHeight: "16px" }}>管理员</Tag>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Dropdown>
         </div>
       </Sider>
       <Layout style={{ background: "transparent" }}>

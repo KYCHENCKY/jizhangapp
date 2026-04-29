@@ -10,6 +10,9 @@ export const register = (data: { username: string; password: string }): Promise<
 export const fetchMe = (): Promise<ApiResponse<User>> =>
   client.get("/auth/me");
 
+export const changePassword = (data: { old_password: string; new_password: string }): Promise<ApiResponse<null>> =>
+  client.patch("/auth/password", data);
+
 export const fetchUsers = (): Promise<ApiResponse<User[]>> =>
   client.get("/admin/users");
 

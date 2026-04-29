@@ -1,4 +1,5 @@
 """Auth endpoints: register, login, me, admin user management."""
+from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -100,6 +101,24 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)):
     return ApiResponse(data=UserOut.model_validate(current_user).model_dump())
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str = Field(..., min_length=4, max_length=100)
+
+
+@router.patch("/password")
+def change_password(
+    data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(data.old_password, current_user.password_hash):
+        raise HTTPException(400, "原密码错误")
+    current_user.password_hash = hash_password(data.new_password)
+    db.commit()
+    return ApiResponse(message="密码修改成功")
 
 
 # ---- Admin user management ----

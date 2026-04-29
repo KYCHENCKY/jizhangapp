@@ -14,6 +14,7 @@ import ImportPage from "./pages/ImportPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
@@ -69,6 +70,7 @@ export default function App() {
                 <Route path="budgets" element={<BudgetsPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="import" element={<ImportPage />} />
+                <Route path="settings" element={<SettingsPage />} />
                 <Route path="admin/users" element={<AdminUsersPage />} />
               </Route>
             </Routes>
