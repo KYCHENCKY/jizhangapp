@@ -16,7 +16,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     is_admin = Column(Integer, default=0)
     is_active = Column(Integer, default=1)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
     budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")
@@ -39,7 +39,7 @@ class Category(Base):
     color = Column(String(20), default="#1677ff")
     sort_order = Column(Integer, default=0)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="categories")
     parent = relationship("Category", remote_side=[id], backref="children")
@@ -61,7 +61,7 @@ class Budget(Base):
     alert_ratio = Column(Float, default=0.8)
     is_active = Column(Integer, default=1)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="budgets")
     category = relationship("Category", back_populates="budgets")
@@ -77,7 +77,7 @@ class CategoryRule(Base):
     match_mode = Column(String(20), default="contains")  # contains / exact / regex
     priority = Column(Integer, default=0)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="rules")
     category = relationship("Category", back_populates="rules")
@@ -95,7 +95,7 @@ class ImportBatch(Base):
     date_start = Column(String(10), nullable=True)
     date_end = Column(String(10), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    imported_at = Column(DateTime, default=func.now())
+    imported_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="import_batches")
     transactions = relationship("Transaction", back_populates="import_batch")
@@ -120,7 +120,7 @@ class Transaction(Base):
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     import_batch_id = Column(Integer, ForeignKey("import_batches.id", ondelete="CASCADE"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", back_populates="transactions")
     category = relationship("Category", back_populates="transactions")

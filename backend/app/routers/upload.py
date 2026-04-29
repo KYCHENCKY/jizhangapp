@@ -140,10 +140,19 @@ def confirm_import(req: ConfirmImportRequest, db: Session = Depends(get_db),
     if not txns:
         raise HTTPException(400, "没有待确认的交易记录，请重新上传文件")
 
+    # Re-dedup at confirm time to avoid unique constraint violations
+    existing_ids = set(
+        r[0] for r in db.query(Transaction.source_txn_id).filter(
+            Transaction.source_platform == batch.source_platform,
+            Transaction.source_txn_id.in_([t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]),
+        ).all()
+    )
+    new_txns = [t for t in txns if not t.get("source_txn_id") or t["source_txn_id"] not in existing_ids]
+
     categorized = 0
-    for t_data in txns:
+    for t_data in new_txns:
         t_data.pop("transaction_time_display", None)
-        txn = Transaction(**t_data, import_batch_id=batch.id, user_id=user_id)
+        txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
         db.add(txn)
         db.flush()
         cat_id = auto_categorize(db, txn)
@@ -151,13 +160,13 @@ def confirm_import(req: ConfirmImportRequest, db: Session = Depends(get_db),
             txn.category_id = cat_id
             categorized += 1
 
-    batch.new_count = len(txns)
-    batch.dup_count = batch.record_count - len(txns)
+    batch.new_count = len(new_txns)
+    batch.dup_count = batch.record_count - len(new_txns)
     db.commit()
 
     _remove_preview(req.batch_id)
 
-    return ApiResponse(data={"new_count": len(txns), "categorized": categorized})
+    return ApiResponse(data={"new_count": len(new_txns), "categorized": categorized})
 
 
 @router.post("/confirm-all")
@@ -182,10 +191,22 @@ def confirm_all_imports(req: ConfirmAllRequest, db: Session = Depends(get_db),
             errors.append(f"批次 {batch_id} 没有待确认的交易记录")
             continue
 
+        # Re-dedup at confirm time
+        source_ids = [t.get("source_txn_id", "") for t in txns if t.get("source_txn_id")]
+        existing_ids = set()
+        if source_ids:
+            existing_ids = set(
+                r[0] for r in db.query(Transaction.source_txn_id).filter(
+                    Transaction.source_platform == batch.source_platform,
+                    Transaction.source_txn_id.in_(source_ids),
+                ).all()
+            )
+        new_txns = [t for t in txns if not t.get("source_txn_id") or t["source_txn_id"] not in existing_ids]
+
         categorized = 0
-        for t_data in txns:
+        for t_data in new_txns:
             t_data.pop("transaction_time_display", None)
-            txn = Transaction(**t_data, import_batch_id=batch.id, user_id=user_id)
+            txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
             db.add(txn)
             db.flush()
             cat_id = auto_categorize(db, txn)
@@ -193,9 +214,9 @@ def confirm_all_imports(req: ConfirmAllRequest, db: Session = Depends(get_db),
                 txn.category_id = cat_id
                 categorized += 1
 
-        batch.new_count = len(txns)
-        batch.dup_count = batch.record_count - len(txns)
-        total_new += len(txns)
+        batch.new_count = len(new_txns)
+        batch.dup_count = batch.record_count - len(new_txns)
+        total_new += len(new_txns)
         total_categorized += categorized
         _remove_preview(batch_id)
 
@@ -220,6 +241,9 @@ def list_batches(db: Session = Depends(get_db),
 def delete_all_batches(db: Session = Depends(get_db),
                        current_user: User = Depends(get_current_user)):
     """Delete all import batches and ALL transactions for current user."""
+    batch_count = db.query(ImportBatch).filter(
+        ImportBatch.user_id == current_user.id
+    ).count()
     txn_deleted = db.query(Transaction).filter(
         Transaction.user_id == current_user.id
     ).delete(synchronize_session=False)
