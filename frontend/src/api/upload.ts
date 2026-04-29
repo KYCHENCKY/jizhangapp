@@ -4,13 +4,13 @@ import type { ApiResponse, ImportBatch } from "../types";
 export const uploadAlipay = (file: File): Promise<ApiResponse<{ batch: ImportBatch; preview: Record<string, unknown>[]; preview_total: number }>> => {
   const fd = new FormData();
   fd.append("file", file);
-  return client.post("/upload/alipay", fd, { headers: { "Content-Type": "multipart/form-data" } });
+  return client.post("/upload/alipay", fd);
 };
 
 export const uploadWechat = (file: File): Promise<ApiResponse<{ batch: ImportBatch; preview: Record<string, unknown>[]; preview_total: number }>> => {
   const fd = new FormData();
   fd.append("file", file);
-  return client.post("/upload/wechat", fd, { headers: { "Content-Type": "multipart/form-data" } });
+  return client.post("/upload/wechat", fd);
 };
 
 export const confirmImport = (batch_id: number): Promise<ApiResponse<{ new_count: number; categorized: number }>> =>
