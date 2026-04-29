@@ -46,13 +46,16 @@ export default function BudgetsPage() {
 
   const expenseCats = categories?.filter((c) => c.type === "expense") ?? [];
 
-  const handleCreate = () => {
-    form.validateFields().then((values) => {
-      createMutation.mutate(values, {
-        onSuccess: () => { message.success("预算创建成功"); setModalOpen(false); form.resetFields(); },
-        onError: (err) => message.error(err.message),
-      });
-    });
+  const handleCreate = async () => {
+    try {
+      const values = await form.validateFields();
+      await createMutation.mutateAsync(values);
+      message.success("预算创建成功");
+      setModalOpen(false);
+      form.resetFields();
+    } catch (err: any) {
+      if (err?.message) message.error(err.message);
+    }
   };
 
   return (
