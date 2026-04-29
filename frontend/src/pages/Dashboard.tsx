@@ -80,7 +80,7 @@ export default function Dashboard() {
     ],
   };
 
-  const alertList = alerts?.filter((a) => a.severity !== "ok") ?? [];
+  const budgetList = alerts ?? [];
 
   const columns = [
     { title: "时间", dataIndex: "transaction_time", render: (v: string) => <span style={{ color: "#8c7568", fontSize: 13 }}>{formatDate(v)}</span>, width: 100 },
@@ -159,44 +159,51 @@ export default function Dashboard() {
             title={
               <span>
                 <WarningOutlined style={{ marginRight: 8 }} />
-                预算预警
+                预算概览
               </span>
             }
             size="small"
           >
-            {alertList.length > 0 ? (
-              alertList.map((a) => (
+            {budgetList.length > 0 ? (
+              budgetList.map((b) => {
+                const isExceeded = b.severity === "exceeded";
+                const isWarning = b.severity === "warning";
+                const isOk = b.severity === "ok";
+                return (
                 <div
-                  key={a.id}
+                  key={b.id}
                   style={{
                     marginBottom: 12,
                     padding: "12px 14px",
-                    background: a.severity === "exceeded" ? "#fef3ed" : "#fffbf0",
+                    background: isExceeded ? "#fef3ed" : isWarning ? "#fffbf0" : "#f5faf5",
                     borderRadius: 12,
-                    borderLeft: a.severity === "exceeded" ? "3px solid #e07060" : "3px solid #f5a623",
+                    borderLeft: isExceeded ? "3px solid #e07060" : isWarning ? "3px solid #f5a623" : "3px solid #38a169",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span>
-                      <Tag color={a.category_color}>{a.category_name}</Tag>
-                      {a.period === "monthly" ? "月度" : a.period === "yearly" ? "年度" : "周度"}预算
+                      <Tag color={b.category_color}>{b.category_name}</Tag>
+                      {b.period === "monthly" ? "月度" : b.period === "yearly" ? "年度" : "周度"}预算
                     </span>
-                    <span style={{ color: a.severity === "exceeded" ? "#e07060" : "#f5a623", fontWeight: 600 }}>
-                      {formatMoney(a.spent)} / {formatMoney(a.amount)}
+                    <span style={{
+                      color: isExceeded ? "#e07060" : isWarning ? "#f5a623" : "#38a169",
+                      fontWeight: 600,
+                    }}>
+                      {formatMoney(b.spent)} / {formatMoney(b.amount)}
                     </span>
                   </div>
                   <Progress
-                    percent={Math.round(a.spent_ratio * 100)}
-                    status={a.severity === "exceeded" ? "exception" : "active"}
-                    strokeColor={a.severity === "exceeded" ? "#e07060" : { from: "#f5a623", to: "#f0835b" }}
+                    percent={Math.round(b.spent_ratio * 100)}
+                    status={isExceeded ? "exception" : isOk ? "success" : "active"}
+                    strokeColor={isExceeded ? "#e07060" : isWarning ? { from: "#f5a623", to: "#f0835b" } : "#38a169"}
                     size="small"
                     strokeWidth={8}
                   />
                 </div>
-              ))
+              )})
             ) : (
               <div style={{ textAlign: "center", padding: 40, color: "#999" }}>
-                暂无预算预警
+                暂无预算
                 <br />
                 <a onClick={() => navigate("/budgets")}>去设置预算</a>
               </div>
