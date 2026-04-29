@@ -1,0 +1,107 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #fef9f2 0%, #fdf5e6 50%, #fef8f0 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Warm card override */
+.ant-card {
+  border-radius: 16px !important;
+  box-shadow: 0 2px 16px rgba(240,131,91,0.06) !important;
+  transition: box-shadow 0.3s ease, transform 0.3s ease !important;
+}
+
+.ant-card:hover {
+  box-shadow: 0 4px 24px rgba(240,131,91,0.12) !important;
+}
+
+/* Warm table header */
+.ant-table-thead > tr > th {
+  background: #fdf5e6 !important;
+  color: #4a3728 !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #f0e4d8 !important;
+}
+
+/* Table row hover */
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: #fef3ed !important;
+}
+
+/* Primary button glow */
+.ant-btn-primary {
+  box-shadow: 0 2px 8px rgba(240,131,91,0.25) !important;
+  border-radius: 12px !important;
+}
+
+.ant-btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(240,131,91,0.35) !important;
+}
+
+/* Menu selected item */
+.ant-menu-item-selected {
+  background: #fef3ed !important;
+  border-radius: 10px !important;
+}
+
+/* Tag rounded */
+.ant-tag {
+  border-radius: 8px !important;
+}
+
+/* Progress bar rounded */
+.ant-progress-line .ant-progress-outer {
+  border-radius: 6px !important;
+}
+
+/* Segmented */
+.ant-segmented {
+  border-radius: 12px !important;
+}
+
+.ant-segmented .ant-segmented-item-selected {
+  border-radius: 10px !important;
+}
+
+/* Select dropdown */
+.ant-select-dropdown {
+  border-radius: 12px !important;
+}
+
+/* Table */
+.ant-table {
+  border-radius: 12px !important;
+}
+
+/* Statistic title */
+.ant-statistic-title {
+  color: #8c7568 !important;
+  font-size: 13px !important;
+}
+
+.ant-statistic-content {
+  font-weight: 700 !important;
+}
+
+/* Modal */
+.ant-modal-content {
+  border-radius: 16px !important;
+}
+
+/* Input, Select */
+.ant-input,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 10px !important;
+}

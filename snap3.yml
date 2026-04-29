@@ -1,0 +1,156 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: 记账助手
+        - menu [ref=e7]:
+          - menuitem "dashboard 仪表盘" [ref=e8] [cursor=pointer]:
+            - img "dashboard" [ref=e9]:
+              - img [ref=e10]
+            - generic [ref=e12]: 仪表盘
+          - menuitem "unordered-list 交易明细" [ref=e13] [cursor=pointer]:
+            - img "unordered-list" [ref=e14]:
+              - img [ref=e15]
+            - generic [ref=e17]: 交易明细
+          - menuitem "pie-chart 统计分析" [ref=e18] [cursor=pointer]:
+            - img "pie-chart" [ref=e19]:
+              - img [ref=e20]
+            - generic [ref=e22]: 统计分析
+          - menuitem "dollar 预算管理" [ref=e23] [cursor=pointer]:
+            - img "dollar" [ref=e24]:
+              - img [ref=e25]
+            - generic [ref=e27]: 预算管理
+          - menuitem "appstore 分类管理" [ref=e28] [cursor=pointer]:
+            - img "appstore" [ref=e29]:
+              - img [ref=e30]
+            - generic [ref=e32]: 分类管理
+          - menuitem "import 账单导入" [ref=e33] [cursor=pointer]:
+            - img "import" [ref=e34]:
+              - img [ref=e35]
+            - generic [ref=e37]: 账单导入
+      - img "left" [ref=e39] [cursor=pointer]:
+        - img [ref=e40]
+    - main [ref=e43]:
+      - generic [ref=e44]:
+        - heading "统计分析" [level=2] [ref=e45]
+        - generic [ref=e48]:
+          - radiogroup "segmented control" [ref=e50]:
+            - generic [ref=e51]:
+              - generic [ref=e52] [cursor=pointer]:
+                - radio "按年"
+                - generic "按年" [ref=e53]
+              - generic [ref=e54] [cursor=pointer]:
+                - radio "按月" [checked]
+                - generic "按月" [ref=e55]
+              - generic [ref=e56] [cursor=pointer]:
+                - radio "按周"
+                - generic "按周" [ref=e57]
+          - generic [ref=e60]:
+            - textbox "请选择月份" [active] [ref=e61]: 2026-04
+            - generic:
+              - img "calendar":
+                - img
+            - button "close-circle" [ref=e62] [cursor=pointer]:
+              - img "close-circle" [ref=e63]:
+                - img [ref=e64]
+          - generic [ref=e66]: 账单来源：
+          - radiogroup "segmented control" [ref=e68]:
+            - generic [ref=e69]:
+              - generic [ref=e70] [cursor=pointer]:
+                - radio "全部" [checked]
+                - generic "全部" [ref=e71]
+              - generic [ref=e72] [cursor=pointer]:
+                - radio "支付宝"
+                - generic "支付宝" [ref=e73]
+              - generic [ref=e74] [cursor=pointer]:
+                - radio "微信"
+                - generic "微信" [ref=e75]
+          - generic [ref=e76]: 2026年4月
+        - generic [ref=e77]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: 2026年4月 收入
+            - generic [ref=e82]: "0.00"
+          - generic [ref=e85]:
+            - generic [ref=e86]: 2026年4月 支出
+            - generic [ref=e87]: "0.00"
+          - generic [ref=e90]:
+            - generic [ref=e91]: 结余
+            - generic [ref=e92]: "0.00"
+          - generic [ref=e95]:
+            - generic [ref=e96]: 交易笔数
+            - generic [ref=e97]: "0.00"
+        - generic [ref=e98]:
+          - generic [ref=e103]: 收支对比
+          - generic [ref=e117]:
+            - button "left" [ref=e119] [cursor=pointer]:
+              - img "left" [ref=e121]:
+                - img [ref=e122]
+            - generic [ref=e124]: 2026-04
+            - button "right" [ref=e126] [cursor=pointer]:
+              - img "right" [ref=e128]:
+                - img [ref=e129]
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - generic [ref=e140]: 支出分类占比
+            - generic [ref=e142]:
+              - img "暂无数据" [ref=e144]
+              - generic [ref=e155]: 暂无数据
+          - generic [ref=e157]:
+            - generic [ref=e160]: 分类支出排行
+            - generic [ref=e162]:
+              - img "暂无数据" [ref=e164]
+              - generic [ref=e175]: 暂无数据
+        - generic [ref=e181]: 近12月收支趋势
+        - generic [ref=e197]:
+          - generic [ref=e202]: 2026年4月 交易明细
+          - table [ref=e210]:
+            - rowgroup [ref=e219]:
+              - row "时间 收/支 分类 对方 说明 金额 平台" [ref=e220]:
+                - columnheader "时间" [ref=e221]
+                - columnheader "收/支" [ref=e222]
+                - columnheader "分类" [ref=e223]
+                - columnheader "对方" [ref=e224]
+                - columnheader "说明" [ref=e225]
+                - columnheader "金额" [ref=e226]
+                - columnheader "平台" [ref=e227]
+            - rowgroup [ref=e228]:
+              - row "暂无数据 暂无数据" [ref=e229]:
+                - cell "暂无数据 暂无数据" [ref=e230]:
+                  - generic [ref=e232]:
+                    - img "暂无数据" [ref=e234]
+                    - generic [ref=e240]: 暂无数据
+  - generic [ref=e251]:
+    - generic [ref=e252]:
+      - button "上一年 (Control键加左方向键)" [ref=e253] [cursor=pointer]
+      - button "选择年份" [ref=e256] [cursor=pointer]: 2026年
+      - button "下一年 (Control键加右方向键)" [ref=e257] [cursor=pointer]
+    - table [ref=e260]:
+      - rowgroup [ref=e261]:
+        - row "Jan Feb Mar" [ref=e262]:
+          - cell "Jan" [ref=e263] [cursor=pointer]:
+            - generic [ref=e264]: Jan
+          - cell "Feb" [ref=e265] [cursor=pointer]:
+            - generic [ref=e266]: Feb
+          - cell "Mar" [ref=e267] [cursor=pointer]:
+            - generic [ref=e268]: Mar
+        - row "Apr May Jun" [ref=e269]:
+          - cell "Apr" [ref=e270] [cursor=pointer]:
+            - generic [ref=e271]: Apr
+          - cell "May" [ref=e272] [cursor=pointer]:
+            - generic [ref=e273]: May
+          - cell "Jun" [ref=e274] [cursor=pointer]:
+            - generic [ref=e275]: Jun
+        - row "Jul Aug Sep" [ref=e276]:
+          - cell "Jul" [ref=e277] [cursor=pointer]:
+            - generic [ref=e278]: Jul
+          - cell "Aug" [ref=e279] [cursor=pointer]:
+            - generic [ref=e280]: Aug
+          - cell "Sep" [ref=e281] [cursor=pointer]:
+            - generic [ref=e282]: Sep
+        - row "Oct Nov Dec" [ref=e283]:
+          - cell "Oct" [ref=e284] [cursor=pointer]:
+            - generic [ref=e285]: Oct
+          - cell "Nov" [ref=e286] [cursor=pointer]:
+            - generic [ref=e287]: Nov
+          - cell "Dec" [ref=e288] [cursor=pointer]:
+            - generic [ref=e289]: Dec
