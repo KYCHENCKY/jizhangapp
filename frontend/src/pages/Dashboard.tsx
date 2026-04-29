@@ -11,7 +11,7 @@ import ReactECharts from "echarts-for-react";
 
 import { useSummary } from "../hooks/useStatistics";
 import { useByCategory } from "../hooks/useStatistics";
-import { useBudgetAlerts } from "../hooks/useBudgets";
+import { useBudgets } from "../hooks/useBudgets";
 import { useTransactions } from "../hooks/useTransactions";
 import { useCategories } from "../hooks/useCategories";
 import { formatMoney, formatDate, getCurrentYearMonth } from "../utils/formatters";
@@ -31,7 +31,7 @@ export default function Dashboard() {
     end_date: `${monthStr}-31`,
   });
 
-  const { data: alerts } = useBudgetAlerts({ year, month });
+  const { data: budgets } = useBudgets({ year, month });
   const { data: txns } = useTransactions({ page: 1, page_size: 10, sort_order: "desc" });
   const { data: categories } = useCategories();
   const incomeCats = categories?.filter((c) => c.type === "income") ?? [];
@@ -80,7 +80,7 @@ export default function Dashboard() {
     ],
   };
 
-  const budgetList = alerts ?? [];
+  const budgetList = budgets ?? [];
 
   const columns = [
     { title: "时间", dataIndex: "transaction_time", render: (v: string) => <span style={{ color: "#8c7568", fontSize: 13 }}>{formatDate(v)}</span>, width: 100 },
