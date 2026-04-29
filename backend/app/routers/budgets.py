@@ -23,7 +23,7 @@ def list_budgets(
     if year is not None:
         q = q.filter(Budget.year == year)
     if month is not None:
-        q = q.filter(Budget.month == month)
+        q = q.filter((Budget.period != "monthly") | (Budget.month == month))
     if is_active is not None:
         q = q.filter(Budget.is_active == int(is_active))
 
@@ -34,7 +34,7 @@ def list_budgets(
 
     results = []
     for b in budgets:
-        alerts = get_budget_alerts(db, b.year or yr, b.month)
+        alerts = get_budget_alerts(db, b.year or yr, b.month, current_user.id)
         matching = [a for a in alerts if a["id"] == b.id]
         if matching:
             results.append(matching[0])
@@ -120,4 +120,4 @@ def alerts(
     now = __import__("datetime").datetime.now()
     yr = year or now.year
     mo = month or now.month
-    return ApiResponse(data=get_budget_alerts(db, yr, mo))
+    return ApiResponse(data=get_budget_alerts(db, yr, mo, current_user.id))

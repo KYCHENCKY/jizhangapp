@@ -7,9 +7,12 @@ from sqlalchemy.orm import Session
 from ..models import Budget, Transaction
 
 
-def get_budget_alerts(db: Session, year: int, month: int | None = None) -> list[dict]:
+def get_budget_alerts(db: Session, year: int, month: int | None = None, user_id: int | None = None) -> list[dict]:
     """Return all active budgets with current spending and severity."""
-    budgets = db.query(Budget).filter(Budget.is_active == 1).all()
+    q = db.query(Budget).filter(Budget.is_active == 1)
+    if user_id is not None:
+        q = q.filter(Budget.user_id == user_id)
+    budgets = q.all()
     alerts = []
 
     for b in budgets:
@@ -50,6 +53,7 @@ def _calculate_spent(db: Session, budget: Budget, year: int, month: int | None) 
     q = db.query(func.coalesce(func.sum(Transaction.amount), 0)).filter(
         Transaction.direction == "expense",
         Transaction.category_id == budget.category_id,
+        Transaction.user_id == budget.user_id,
     )
 
     if budget.period == "yearly":

@@ -49,7 +49,11 @@ export default function BudgetsPage() {
   const handleCreate = async () => {
     try {
       const values = await form.validateFields();
-      await createMutation.mutateAsync(values);
+      await createMutation.mutateAsync({
+        ...values,
+        year,
+        month: values.period === "monthly" ? month : undefined,
+      });
       message.success("预算创建成功");
       setModalOpen(false);
       form.resetFields();
