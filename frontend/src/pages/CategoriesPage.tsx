@@ -207,7 +207,6 @@ export default function CategoriesPage() {
       if (err?.message) message.error(err.message);
     }
   };
-  };
 
   const catColumns = [
     {
