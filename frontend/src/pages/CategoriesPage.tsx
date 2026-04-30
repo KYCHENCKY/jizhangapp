@@ -15,38 +15,75 @@ const PRESET_COLORS = [
 ];
 
 const EMOJI_OPTIONS: { emoji: string; label: string }[] = [
-  { emoji: "🍜", label: "餐饮美食" },
-  { emoji: "🚗", label: "交通出行" },
-  { emoji: "🛒", label: "购物消费" },
-  { emoji: "🏡", label: "住房物业" },
-  { emoji: "⚡", label: "水电燃气" },
-  { emoji: "📶", label: "通讯网络" },
-  { emoji: "🎉", label: "休闲娱乐" },
-  { emoji: "💊", label: "医疗健康" },
-  { emoji: "📚", label: "教育学习" },
-  { emoji: "💄", label: "服饰美容" },
-  { emoji: "🏪", label: "日用百货" },
-  { emoji: "💻", label: "数码电器" },
-  { emoji: "🔧", label: "汽车养护" },
-  { emoji: "🏃", label: "运动健身" },
-  { emoji: "🐾", label: "宠物" },
-  { emoji: "🎁", label: "人情往来" },
-  { emoji: "🎓", label: "知识付费" },
-  { emoji: "🧧", label: "转账红包" },
-  { emoji: "🏠", label: "居家生活" },
-  { emoji: "💰", label: "工资收入" },
-  { emoji: "🏆", label: "奖金绩效" },
-  { emoji: "💼", label: "兼职收入" },
-  { emoji: "📈", label: "投资收益" },
-  { emoji: "💹", label: "利息收益" },
-  { emoji: "📋", label: "报销补贴" },
-  { emoji: "💸", label: "转账收入" },
-  { emoji: "↩️", label: "退款返利" },
-  { emoji: "🏦", label: "银行存取" },
-  { emoji: "💳", label: "信用卡还款" },
-  { emoji: "🔄", label: "内部转账" },
-  { emoji: "📊", label: "投资理财" },
-  { emoji: "❓", label: "其他" },
+  // 餐饮
+  { emoji: "🍜", label: "面条/中餐" }, { emoji: "🍚", label: "米饭/简餐" },
+  { emoji: "🍕", label: "披萨/西餐" }, { emoji: "🍔", label: "汉堡/快餐" },
+  { emoji: "🍣", label: "寿司/日料" }, { emoji: "🥘", label: "火锅/大餐" },
+  { emoji: "🍰", label: "蛋糕/甜品" }, { emoji: "☕", label: "咖啡/奶茶" },
+  { emoji: "🍺", label: "酒水/酒吧" }, { emoji: "🍞", label: "面包/烘焙" },
+  { emoji: "🥗", label: "轻食/沙拉" }, { emoji: "🌮", label: "小吃/零食" },
+  // 交通
+  { emoji: "🚗", label: "汽车/自驾" }, { emoji: "🚌", label: "公交/大巴" },
+  { emoji: "🚇", label: "地铁/轨道" }, { emoji: "🚲", label: "单车/骑行" },
+  { emoji: "✈️", label: "机票/飞行" }, { emoji: "🚢", label: "船票/轮渡" },
+  { emoji: "🚕", label: "出租/网约车" }, { emoji: "🛵", label: "电瓶车/摩托" },
+  { emoji: "⛽", label: "加油/充电" }, { emoji: "🅿️", label: "停车/过路" },
+  // 购物
+  { emoji: "🛒", label: "超市/购物" }, { emoji: "🛍️", label: "百货/商场" },
+  { emoji: "👗", label: "服装/穿搭" }, { emoji: "👟", label: "鞋靴/箱包" },
+  { emoji: "👜", label: "包包/配饰" }, { emoji: "📦", label: "快递/物流" },
+  // 居家
+  { emoji: "🏠", label: "房租/房贷" }, { emoji: "🏡", label: "物业/别墅" },
+  { emoji: "🛋️", label: "家具/家居" }, { emoji: "🛏️", label: "家纺/床品" },
+  { emoji: "🚿", label: "卫浴/洁具" }, { emoji: "💡", label: "灯具/照明" },
+  { emoji: "🔌", label: "家电/插电" }, { emoji: "🧹", label: "保洁/家政" },
+  // 能源通讯
+  { emoji: "⚡", label: "电费/能源" }, { emoji: "💧", label: "水费/燃气" },
+  { emoji: "📶", label: "话费/网络" }, { emoji: "📱", label: "手机/通讯" },
+  // 娱乐
+  { emoji: "🎉", label: "聚会/派对" }, { emoji: "🎬", label: "电影/影院" },
+  { emoji: "🎵", label: "音乐/音频" }, { emoji: "🎮", label: "游戏/电竞" },
+  { emoji: "🎪", label: "演出/展览" }, { emoji: "🌍", label: "旅行/旅游" },
+  { emoji: "🏨", label: "酒店/民宿" }, { emoji: "🎲", label: "棋牌/桌游" },
+  // 医疗
+  { emoji: "💊", label: "药品/医药" }, { emoji: "🏥", label: "医院/门诊" },
+  { emoji: "🩺", label: "体检/检查" }, { emoji: "🦷", label: "牙科/口腔" },
+  { emoji: "👁️", label: "眼科/视力" },
+  // 教育
+  { emoji: "📚", label: "书籍/教材" }, { emoji: "✏️", label: "文具/办公" },
+  { emoji: "🎓", label: "学费/培训" }, { emoji: "🖊️", label: "考试/证书" },
+  // 美容
+  { emoji: "💄", label: "化妆/彩妆" }, { emoji: "💅", label: "美甲/美睫" },
+  { emoji: "💇", label: "理发/美发" }, { emoji: "🧴", label: "护肤/保养" },
+  // 数码
+  { emoji: "💻", label: "电脑/笔记本" }, { emoji: "🖥️", label: "台式机/组装" },
+  { emoji: "📷", label: "相机/摄影" }, { emoji: "🎧", label: "耳机/音箱" },
+  // 汽车
+  { emoji: "🔧", label: "维修/保养" }, { emoji: "🏍️", label: "摩托车" },
+  { emoji: "🧰", label: "车品/配件" },
+  // 运动
+  { emoji: "🏃", label: "跑步/健身" }, { emoji: "🏊", label: "游泳/水上" },
+  { emoji: "⚽", label: "足球/球类" }, { emoji: "🏀", label: "篮球" },
+  { emoji: "🎾", label: "网球/小球" }, { emoji: "🧘", label: "瑜伽/冥想" },
+  // 宠物
+  { emoji: "🐶", label: "狗狗" }, { emoji: "🐱", label: "猫咪" },
+  { emoji: "🐾", label: "宠物用品" }, { emoji: "🐠", label: "鱼/水族" },
+  // 人情
+  { emoji: "🎁", label: "送礼/礼物" }, { emoji: "💐", label: "鲜花/花束" },
+  { emoji: "🧧", label: "红包/礼金" }, { emoji: "🎀", label: "庆祝/纪念" },
+  // 收入
+  { emoji: "💰", label: "工资/薪水" }, { emoji: "🏆", label: "奖金/奖励" },
+  { emoji: "💼", label: "兼职/副业" }, { emoji: "📈", label: "股票/投资" },
+  { emoji: "💹", label: "利息/收益" }, { emoji: "💸", label: "转账/收款" },
+  { emoji: "📋", label: "报销/补贴" }, { emoji: "↩️", label: "退款/返利" },
+  { emoji: "🪙", label: "零钱/硬币" }, { emoji: "💎", label: "贵重物品" },
+  // 金融
+  { emoji: "💳", label: "信用卡" }, { emoji: "🏦", label: "银行/储蓄" },
+  { emoji: "📊", label: "理财/基金" }, { emoji: "🔄", label: "转账/汇款" },
+  // 其他
+  { emoji: "🔍", label: "杂项/待分类" }, { emoji: "⭐", label: "收藏/重要" },
+  { emoji: "❓", label: "未知/其他" }, { emoji: "📌", label: "标记/备忘" },
+];
 ];
 
 export default function CategoriesPage() {
