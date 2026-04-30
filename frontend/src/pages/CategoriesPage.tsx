@@ -84,7 +84,6 @@ const EMOJI_OPTIONS: { emoji: string; label: string }[] = [
   { emoji: "🔍", label: "杂项/待分类" }, { emoji: "⭐", label: "收藏/重要" },
   { emoji: "❓", label: "未知/其他" }, { emoji: "📌", label: "标记/备忘" },
 ];
-];
 
 export default function CategoriesPage() {
   const [modalOpen, setModalOpen] = useState(false);
