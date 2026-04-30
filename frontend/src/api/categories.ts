@@ -24,3 +24,9 @@ export const deleteRule = (ruleId: number): Promise<ApiResponse<null>> =>
 
 export const applyAllRules = (): Promise<ApiResponse<{ total_uncategorized: number; categorized: number }>> =>
   client.post("/categories/apply-all-rules");
+
+export const exportRules = (): Promise<ApiResponse<{ version: number; exported_at: string; categories: Record<string, unknown>[] }>> =>
+  client.get("/categories/export");
+
+export const importRules = (data: { categories: Record<string, unknown>[] }): Promise<ApiResponse<{ created_categories: number; skipped_categories: number; created_rules: number; applied_to_transactions: number }>> =>
+  client.post("/categories/import", data);

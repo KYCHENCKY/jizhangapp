@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Table, Button, Modal, Form, Input, Select, Tag, Popconfirm, Space, message, Tabs, Card, ColorPicker, Tooltip } from "antd";
-import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Color } from "antd/es/color-picker";
 
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, useRules, useAddRule, useDeleteRule, useApplyAllRules } from "../hooks/useCategories";
+import * as api from "../api/categories";
 import type { Category } from "../types";
 
 const PRESET_COLORS = [
@@ -101,6 +103,58 @@ export default function CategoriesPage() {
   const addRuleMutation = useAddRule();
   const deleteRuleMutation = useDeleteRule();
   const applyAllRulesMutation = useApplyAllRules();
+  const qc = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Export: download categories + rules as JSON
+  const handleExport = async () => {
+    try {
+      const res = await api.exportRules();
+      const json = JSON.stringify(res.data, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `jizhang-rules-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      message.success("规则已导出");
+    } catch (err: any) {
+      message.error(err.message);
+    }
+  };
+
+  // Import: parse JSON file and import categories + rules
+  const importMutation = useMutation({
+    mutationFn: api.importRules,
+    onSuccess: (res) => {
+      message.success(res.message);
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: ["rules"] });
+    },
+    onError: (err) => message.error(err.message),
+  });
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (!data.categories || !Array.isArray(data.categories)) {
+          message.error("无效的规则文件格式");
+          return;
+        }
+        importMutation.mutate({ categories: data.categories });
+      } catch {
+        message.error("文件解析失败，请确认是有效的 JSON 文件");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input so the same file can be selected again
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const incomeCats = categories?.filter((c) => c.type === "income") ?? [];
   const expenseCats = categories?.filter((c) => c.type === "expense") ?? [];
@@ -293,6 +347,17 @@ export default function CategoriesPage() {
               })}>
               应用全部规则
             </Button>
+            <Button icon={<DownloadOutlined />} onClick={handleExport}>导出规则</Button>
+            <Button icon={<UploadOutlined />} loading={importMutation.isPending} onClick={() => fileInputRef.current?.click()}>
+              导入规则
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              style={{ display: "none" }}
+              onChange={handleImport}
+            />
           </Space>
         }
         onChange={() => setSelectedCat(null)}

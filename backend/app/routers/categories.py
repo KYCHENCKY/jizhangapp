@@ -191,3 +191,134 @@ def delete_rule(rule_id: int, db: Session = Depends(get_db),
     db.delete(rule)
     db.commit()
     return ApiResponse(message="已删除")
+
+
+# ---- Import / Export ----
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class ExportData(BaseModel):
+    version: int = 1
+    exported_at: str
+    categories: list[dict]
+
+
+@router.get("/export")
+def export_rules(db: Session = Depends(get_db),
+                 current_user: User = Depends(get_current_user)):
+    """Export all categories and rules as JSON."""
+    cats = db.query(Category).filter(Category.user_id == current_user.id).all()
+    export_cats = []
+    for cat in cats:
+        rules = db.query(CategoryRule).filter(
+            CategoryRule.category_id == cat.id,
+            CategoryRule.user_id == current_user.id,
+        ).all()
+        export_cats.append({
+            "name": cat.name,
+            "type": cat.type,
+            "icon": cat.icon,
+            "color": cat.color,
+            "rules": [
+                {
+                    "field": r.field,
+                    "pattern": r.pattern,
+                    "match_mode": r.match_mode,
+                    "priority": r.priority,
+                }
+                for r in rules
+            ],
+        })
+    return ApiResponse(data={
+        "version": 1,
+        "exported_at": datetime.now().isoformat(),
+        "categories": export_cats,
+    })
+
+
+class ImportRequest(BaseModel):
+    categories: list[dict]
+
+
+@router.post("/import")
+def import_rules(data: ImportRequest, db: Session = Depends(get_db),
+                 current_user: User = Depends(get_current_user)):
+    """Import categories and rules from JSON. Existing rules are kept, new ones added."""
+    created_cats = 0
+    created_rules = 0
+    skipped_cats = 0
+
+    for cat_data in data.categories:
+        name = cat_data.get("name", "").strip()
+        cat_type = cat_data.get("type", "expense")
+        if not name:
+            continue
+
+        # Find or create category
+        cat = db.query(Category).filter(
+            Category.name == name,
+            Category.type == cat_type,
+            Category.user_id == current_user.id,
+        ).first()
+        if not cat:
+            cat = Category(
+                name=name,
+                type=cat_type,
+                icon=cat_data.get("icon", "❓"),
+                color=cat_data.get("color", "#1677ff"),
+                user_id=current_user.id,
+            )
+            db.add(cat)
+            db.flush()
+            created_cats += 1
+        else:
+            skipped_cats += 1
+
+        # Add rules for this category
+        for rule_data in cat_data.get("rules", []):
+            pattern = rule_data.get("pattern", "").strip()
+            if not pattern:
+                continue
+            field = rule_data.get("field", "counterparty")
+            match_mode = rule_data.get("match_mode", "contains")
+
+            # Check for duplicate rule
+            existing = db.query(CategoryRule).filter(
+                CategoryRule.category_id == cat.id,
+                CategoryRule.field == field,
+                CategoryRule.pattern == pattern,
+                CategoryRule.user_id == current_user.id,
+            ).first()
+            if existing:
+                continue
+
+            db.add(CategoryRule(
+                category_id=cat.id,
+                field=field,
+                pattern=pattern,
+                match_mode=match_mode,
+                priority=rule_data.get("priority", 5),
+                user_id=current_user.id,
+            ))
+            created_rules += 1
+
+    db.commit()
+
+    # Re-apply rules to uncategorized transactions
+    from ..services.category_service import batch_auto_categorize
+    uncat = db.query(Transaction).filter(
+        Transaction.category_id.is_(None),
+        Transaction.user_id == current_user.id,
+    ).all()
+    applied = batch_auto_categorize(db, uncat)
+
+    return ApiResponse(
+        data={
+            "created_categories": created_cats,
+            "skipped_categories": skipped_cats,
+            "created_rules": created_rules,
+            "applied_to_transactions": applied,
+        },
+        message=f"导入完成！新增 {created_cats} 个分类、{created_rules} 条规则，已为 {applied} 笔交易自动分类",
+    )
