@@ -160,24 +160,26 @@ export default function CategoriesPage() {
   const expenseCats = categories?.filter((c) => c.type === "expense") ?? [];
   const ignoreCats = categories?.filter((c) => c.type === "ignore") ?? [];
 
-  const handleSave = () => {
-    form.validateFields().then((values) => {
+  const handleSave = async () => {
+    try {
+      const values = await form.validateFields();
       const payload = {
         ...values,
         color: typeof values.color === "string" ? values.color : values.color?.toHexString?.() ?? "#1677ff",
       };
       if (editingCat) {
-        updateMutation.mutate({ id: editingCat.id, ...payload }, {
-          onSuccess: () => { message.success("更新成功"); setModalOpen(false); },
-          onError: (err) => message.error(err.message),
-        });
+        await updateMutation.mutateAsync({ id: editingCat.id, ...payload });
+        message.success("更新成功");
+        setModalOpen(false);
       } else {
-        createMutation.mutate(payload, {
-          onSuccess: () => { message.success("创建成功"); setModalOpen(false); form.resetFields(); },
-          onError: (err) => message.error(err.message),
-        });
+        await createMutation.mutateAsync(payload);
+        message.success("创建成功");
+        setModalOpen(false);
+        form.resetFields();
       }
-    });
+    } catch (err: any) {
+      if (err?.message) message.error(err.message);
+    }
   };
 
   const openEdit = (cat: Category) => {
@@ -193,14 +195,18 @@ export default function CategoriesPage() {
     setModalOpen(true);
   };
 
-  const handleAddRule = () => {
+  const handleAddRule = async () => {
     if (!selectedCat) return;
-    ruleForm.validateFields().then((values) => {
-      addRuleMutation.mutate({ categoryId: selectedCat.id, ...values }, {
-        onSuccess: () => { message.success("规则已添加"); ruleForm.resetFields(); refetchRules(); },
-        onError: (err) => message.error(err.message),
-      });
-    });
+    try {
+      const values = await ruleForm.validateFields();
+      await addRuleMutation.mutateAsync({ categoryId: selectedCat.id, ...values });
+      message.success("规则已添加");
+      ruleForm.resetFields();
+      refetchRules();
+    } catch (err: any) {
+      if (err?.message) message.error(err.message);
+    }
+  };
   };
 
   const catColumns = [

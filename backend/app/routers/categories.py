@@ -289,15 +289,22 @@ def add_rule(cat_id: int, data: CategoryRuleCreate, db: Session = Depends(get_db
         user_id=current_user.id,
     )
     db.add(rule)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"保存规则失败: {e}")
 
     # Re-apply rules to all uncategorized transactions
-    from ..services.category_service import batch_auto_categorize
-    uncat = db.query(Transaction).filter(
-        Transaction.category_id.is_(None),
-        Transaction.user_id == current_user.id,
-    ).all()
-    applied = batch_auto_categorize(db, uncat, current_user.id)
+    try:
+        from ..services.category_service import batch_auto_categorize
+        uncat = db.query(Transaction).filter(
+            Transaction.category_id.is_(None),
+            Transaction.user_id == current_user.id,
+        ).all()
+        applied = batch_auto_categorize(db, uncat, current_user.id)
+    except Exception as e:
+        applied = 0
 
     return ApiResponse(data={
         "rule": CategoryRuleOut.model_validate(rule).model_dump(),
