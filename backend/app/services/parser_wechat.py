@@ -23,6 +23,8 @@ COLUMN_MAP = {
 DIRECTION_MAP = {
     "收入": "income",
     "支出": "expense",
+    "/": "neutral",      # 不计收支
+    "不计收支": "neutral",
 }
 
 

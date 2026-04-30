@@ -153,7 +153,7 @@ def get_daily(
         func.strftime("%m", Transaction.transaction_time) == f"{month:02d}",
     )
 
-    q = _apply_filters(q, source_platform=source_platform)
+    q = _apply_filters(q, source_platform=source_platform, user_id=user_id)
     if direction:
         q = q.filter(Transaction.direction == direction)
 
@@ -195,7 +195,7 @@ def get_trend(
         ), 0).label("expense"),
     )
 
-    q = _apply_filters(q, source_platform=source_platform)
+    q = _apply_filters(q, source_platform=source_platform, user_id=user_id)
     if category_id is not None:
         q = q.filter(Transaction.category_id == category_id)
 
