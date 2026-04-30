@@ -94,7 +94,7 @@ export default function BudgetsPage() {
                         background: b.category_color,
                         boxShadow: `0 0 6px ${b.category_color}40`,
                       }} />
-                      <Tag color={b.category_color}>{b.category_name}</Tag>
+                      <Tag color={b.category_color}>{b.category_icon} {b.category_name}</Tag>
                       <span style={{ color: "#8c7568", fontSize: 13 }}>
                         {b.period === "monthly" ? "月度" : b.period === "yearly" ? "年度" : "周度"}
                       </span>

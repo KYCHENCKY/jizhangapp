@@ -36,6 +36,7 @@ export interface Transaction {
   category_id: number | null;
   category_name: string | null;
   category_color: string | null;
+  category_icon: string | null;
 }
 
 export interface Budget {
@@ -43,6 +44,7 @@ export interface Budget {
   category_id: number;
   category_name: string;
   category_color: string;
+  category_icon: string;
   amount: number;
   period: "yearly" | "monthly" | "weekly";
   year: number | null;
@@ -85,6 +87,7 @@ export interface CategoryStat {
   category_id: number | null;
   category_name: string;
   category_color: string;
+  category_icon: string;
   total_amount: number;
   percentage: number;
   count: number;

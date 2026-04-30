@@ -58,7 +58,7 @@ export default function TransactionsPage() {
           onChange={(val) => handleCategoryChange(r.id, val)}
           options={allCats.map((c) => ({
             value: c.id,
-            label: <span><span style={{ color: c.color, marginRight: 4 }}>●</span>{c.name}</span>,
+            label: <span>{c.icon} {c.name}</span>,
           }))}
         />
       ),
@@ -154,7 +154,7 @@ export default function TransactionsPage() {
           showSearch
           filterOption={(input, option) => (option?.label as string ?? "").includes(input)}
           onChange={(v) => handleFilter("category_id", v)}
-          options={allCats.map((c) => ({ value: c.id, label: c.name }))}
+          options={allCats.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
         />
         <Input
           size="small"

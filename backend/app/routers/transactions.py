@@ -72,6 +72,7 @@ def list_transactions(
             "category_id": t.category_id,
             "category_name": t.category.name if t.category else None,
             "category_color": t.category.color if t.category else None,
+            "category_icon": t.category.icon if t.category else None,
         }
         items.append(d)
 

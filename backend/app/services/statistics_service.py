@@ -104,6 +104,7 @@ def get_by_category(
         Transaction.category_id,
         Category.name.label("category_name"),
         Category.color.label("category_color"),
+        Category.icon.label("category_icon"),
         func.sum(Transaction.amount).label("total_amount"),
         func.count(Transaction.id).label("cnt"),
     ).outerjoin(Category, Transaction.category_id == Category.id)
@@ -122,6 +123,7 @@ def get_by_category(
             "category_id": r.category_id,
             "category_name": r.category_name or "未分类",
             "category_color": r.category_color or "#8c8c8c",
+            "category_icon": r.category_icon or "",
             "total_amount": amt,
             "percentage": round(amt / grand_total * 100, 1) if grand_total > 0 else 0,
             "count": r.cnt,

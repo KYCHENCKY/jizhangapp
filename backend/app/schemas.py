@@ -95,6 +95,7 @@ class TransactionOut(BaseModel):
     category_id: Optional[int] = None
     category_name: Optional[str] = None
     category_color: Optional[str] = None
+    category_icon: Optional[str] = None
     model_config = {"from_attributes": True}
 
 
@@ -121,6 +122,7 @@ class BudgetOut(BaseModel):
     category_id: int
     category_name: Optional[str] = None
     category_color: Optional[str] = None
+    category_icon: Optional[str] = None
     amount: float
     period: str
     year: Optional[int] = None
@@ -175,6 +177,7 @@ class CategoryStat(BaseModel):
     category_id: Optional[int] = None
     category_name: Optional[str] = "未分类"
     category_color: Optional[str] = "#8c8c8c"
+    category_icon: Optional[str] = ""
     total_amount: float = 0
     percentage: float = 0
     count: int = 0

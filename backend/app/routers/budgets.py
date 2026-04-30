@@ -44,6 +44,7 @@ def list_budgets(
                 "category_id": b.category_id,
                 "category_name": b.category.name if b.category else "",
                 "category_color": b.category.color if b.category else "#1677ff",
+                "category_icon": b.category.icon if b.category else "",
                 "amount": b.amount,
                 "period": b.period,
                 "year": b.year,

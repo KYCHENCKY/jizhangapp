@@ -194,7 +194,7 @@ export default function StatisticsPage() {
       label: { show: true, formatter: "{b}\n{d}%", color: "#8c7568", fontSize: 11 },
       emphasis: { scaleSize: 8, label: { fontSize: 15, fontWeight: "bold" } },
       data: (catData ?? []).map((c) => ({
-        name: c.category_name,
+        name: `${c.category_icon} ${c.category_name}`,
         value: c.total_amount,
         itemStyle: { color: c.category_color },
       })),
@@ -265,7 +265,7 @@ export default function StatisticsPage() {
     },
     {
       title: "分类", dataIndex: "category_name", width: 100,
-      render: (v: string | null) => v ? <Tag>{v}</Tag> : <Tag color="default">未分类</Tag>,
+      render: (v: string | null, r: { category_icon?: string | null }) => v ? <Tag>{r.category_icon} {v}</Tag> : <Tag color="default">未分类</Tag>,
     },
     {
       title: "金额", dataIndex: "amount", width: 110,

@@ -64,7 +64,7 @@ export default function CategoryRanking({ catData, selectedCategory, onSelect, t
                   fontWeight: 500, fontSize: 13, color: "#4a3728",
                   whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                 }}>
-                  {cat.category_name}
+                  {cat.category_icon} {cat.category_name}
                 </span>
               </div>
 

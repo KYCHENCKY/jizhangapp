@@ -15,6 +15,7 @@ import { useBudgets } from "../hooks/useBudgets";
 import { useTransactions } from "../hooks/useTransactions";
 import { useCategories } from "../hooks/useCategories";
 import { formatMoney, formatDate, getCurrentYearMonth } from "../utils/formatters";
+import type { Transaction } from "../types";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ export default function Dashboard() {
 
   const columns = [
     { title: "时间", dataIndex: "transaction_time", render: (v: string) => <span style={{ color: "#8c7568", fontSize: 13 }}>{formatDate(v)}</span>, width: 100 },
-    { title: "类别", dataIndex: "category_name", render: (v: string | null) => v ? <Tag>{v}</Tag> : <Tag color="default">未分类</Tag>, width: 90 },
+    { title: "类别", dataIndex: "category_name", render: (v: string | null, r: Transaction) => v ? <Tag>{r.category_icon} {v}</Tag> : <Tag color="default">未分类</Tag>, width: 100 },
     { title: "说明", dataIndex: "product_desc", ellipsis: true },
     {
       title: "金额", dataIndex: "amount", render: (v: number, r: { direction: string }) => {
@@ -182,7 +183,7 @@ export default function Dashboard() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span>
-                      <Tag color={b.category_color}>{b.category_name}</Tag>
+                      <Tag color={b.category_color}>{b.category_icon} {b.category_name}</Tag>
                       {b.period === "monthly" ? "月度" : b.period === "yearly" ? "年度" : "周度"}预算
                     </span>
                     <span style={{
