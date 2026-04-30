@@ -172,7 +172,7 @@ def confirm_import(req: ConfirmImportRequest, db: Session = Depends(get_db),
             txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
             db.add(txn)
             db.flush()
-            cat_id = auto_categorize(db, txn)
+            cat_id = auto_categorize(db, txn, current_user.id)
             if cat_id is not None:
                 txn.category_id = cat_id
                 categorized += 1
@@ -243,7 +243,7 @@ def confirm_all_imports(req: ConfirmAllRequest, db: Session = Depends(get_db),
                 txn = Transaction(**t_data, import_batch_id=batch.id, user_id=current_user.id)
                 db.add(txn)
                 db.flush()
-                cat_id = auto_categorize(db, txn)
+                cat_id = auto_categorize(db, txn, current_user.id)
                 if cat_id is not None:
                     txn.category_id = cat_id
                     categorized += 1

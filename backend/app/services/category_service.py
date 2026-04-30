@@ -1,47 +1,279 @@
-"""Auto-categorization engine: match transactions to categories based on rules."""
+"""Auto-categorization engine: rules + keyword fallback."""
 import re
 
 from sqlalchemy.orm import Session
 
 from ..models import CategoryRule, Category
 
-# Map transaction direction to category type
 DIRECTION_TO_CATEGORY_TYPE = {
     "income": "income",
     "expense": "expense",
     "neutral": "ignore",
 }
 
+# Keyword → category_name mapping for fallback categorization.
+# Keys are lowercase substrings matched against product_desc + counterparty + transaction_type.
+EXPENSE_KEYWORDS: dict[str, str] = {
+    # === 餐饮美食 ===
+    "餐饮": "餐饮美食", "美食": "餐饮美食", "外卖": "餐饮美食",
+    "美团": "餐饮美食", "饿了么": "餐饮美食", "肯德基": "餐饮美食",
+    "麦当劳": "餐饮美食", "星巴克": "餐饮美食", "瑞幸": "餐饮美食",
+    "喜茶": "餐饮美食", "奈雪": "餐饮美食", "乐乐茶": "餐饮美食",
+    "1点点": "餐饮美食", "7分甜": "餐饮美食", "蜜雪冰城": "餐饮美食",
+    "coco": "餐饮美食", "一点点": "餐饮美食", "茶百道": "餐饮美食",
+    "coffee": "餐饮美食", "cotti": "餐饮美食", "咖啡": "餐饮美食",
+    "餐厅": "餐饮美食", "饭店": "餐饮美食", "饭馆": "餐饮美食",
+    "小吃": "餐饮美食", "快餐": "餐饮美食", "食堂": "餐饮美食",
+    "火锅": "餐饮美食", "烧烤": "餐饮美食", "料理": "餐饮美食",
+    "烘焙": "餐饮美食", "面包": "餐饮美食", "蛋糕": "餐饮美食",
+    "奶茶": "餐饮美食", "饮品": "餐饮美食", "冰淇淋": "餐饮美食",
+    "面庄": "餐饮美食", "面馆": "餐饮美食", "面店": "餐饮美食",
+    "牛肉面": "餐饮美食", "拉面": "餐饮美食", "酸菜": "餐饮美食",
+    "卤肉": "餐饮美食", "鸡排": "餐饮美食", "正新": "餐饮美食",
+    "虾馆": "餐饮美食", "龙虾": "餐饮美食", "海鲜": "餐饮美食",
+    "德克士": "餐饮美食", "塔斯汀": "餐饮美食", "汉堡": "餐饮美食",
+    "太二": "餐饮美食", "陈香贵": "餐饮美食", "荣先森": "餐饮美食",
+    "谷田稻香": "餐饮美食", "八番屋": "餐饮美食", "君临楼": "餐饮美食",
+    "老字号": "餐饮美食", "菜馆": "餐饮美食", "酒家": "餐饮美食",
+    "先启半步颠": "餐饮美食", "半步颠": "餐饮美食",
+    "来伊份": "餐饮美食", "零食": "餐饮美食", "零食很忙": "餐饮美食",
+    "熟食": "餐饮美食", "卤味": "餐饮美食",
+    "水果": "餐饮美食", "西瓜": "餐饮美食", "柚": "餐饮美食",
+    "蔬菜": "餐饮美食", "菜店": "餐饮美食", "菜场": "餐饮美食",
+    "面条": "餐饮美食", "米饭": "餐饮美食",
+    "牛杂": "餐饮美食", "小食": "餐饮美食", "点心": "餐饮美食",
+    "串串": "餐饮美食", "香锅": "餐饮美食", "麻辣": "餐饮美食",
+    "堂食": "餐饮美食", "打包": "餐饮美食",
+    "一鸣真": "餐饮美食", "十足": "餐饮美食",
+    "豆花": "餐饮美食", "凉皮": "餐饮美食", "冰糖葫芦": "餐饮美食",
+    "石磨": "餐饮美食", "豆浆": "餐饮美食", "盒马": "餐饮美食",
+    "三毛小馆": "餐饮美食", "小馆": "餐饮美食",
+    "饼": "餐饮美食", "餅": "餐饮美食", "餅家": "餐饮美食",
+    "喜士多": "餐饮美食", "十足": "餐饮美食",
+    # === 日用百货 ===
+    "超市": "日用百货", "便利店": "日用百货", "7-11": "日用百货",
+    "罗森": "日用百货", "全家": "日用百货", "屈臣氏": "日用百货",
+    "万宁": "日用百货", "mannings": "日用百货",
+    "开市客": "日用百货", "costco": "日用百货",
+    "hot maxx": "日用百货", "一心玛特": "日用百货",
+    "无印良品": "日用百货", "muji": "日用百货",
+    "可的": "日用百货", "喜士多": "日用百货",
+    "售货": "日用百货", "自动贩卖": "日用百货", "售货机": "日用百货",
+    # === 购物消费 ===
+    "购物中心": "购物消费", "百货": "购物消费", "商场": "购物消费",
+    "广场": "购物消费", "宝龙": "购物消费", "万达": "购物消费",
+    "奥莱": "购物消费", "outlet": "购物消费", "outlets": "购物消费",
+    "泡泡玛特": "购物消费", "pop mart": "购物消费",
+    "泡泡玛特": "购物消费", "popmart": "购物消费",
+    "商场": "购物消费", "购物": "购物消费", "商城": "购物消费",
+    "龙华会": "购物消费", "凤巢": "购物消费",
+    "上新了故宫": "购物消费", "故宫": "购物消费",
+    "迪士尼": "休闲娱乐", "disney": "休闲娱乐",
+    # === 交通出行 ===
+    "滴滴": "交通出行", "打车": "交通出行", "出租车": "交通出行",
+    "地铁": "交通出行", "公交": "交通出行", "铁路": "交通出行",
+    "高铁": "交通出行", "火车": "交通出行", "机票": "交通出行",
+    "航空": "交通出行", "航班": "交通出行", "机场": "交通出行",
+    "中国石化": "交通出行", "中石化": "交通出行", "中石油": "交通出行",
+    "加油站": "交通出行", "加油": "交通出行", "充电站": "交通出行",
+    "etc": "交通出行", "停车": "交通出行", "高速": "交通出行",
+    "高德": "交通出行", "导航": "交通出行", "骑行": "交通出行",
+    "共享单车": "交通出行", "哈啰": "交通出行", "青桔": "交通出行",
+    "享道出行": "交通出行", "嘀嗒出行": "交通出行", "网约车": "交通出行",
+    "货拉拉": "交通出行", "交通卡": "交通出行", "sptcc": "交通出行",
+    "港铁": "交通出行", "八达通": "交通出行", "通行宝": "交通出行",
+    "电瓶车": "交通出行", "单车": "交通出行",
+    "客运": "交通出行", "船票": "交通出行", "嵊泗": "交通出行",
+    "车费": "交通出行", "车位": "交通出行",
+    # === 购物消费 ===
+    "淘宝": "购物消费", "天猫": "购物消费", "京东": "购物消费",
+    "拼多多": "购物消费", "唯品会": "购物消费", "当当": "购物消费",
+    "苏宁": "购物消费", "闲鱼": "购物消费", "转转": "购物消费",
+    "得物": "购物消费", "微店": "购物消费", "抖音": "购物消费",
+    "快手": "购物消费", "小红书": "购物消费", "蘑菇街": "购物消费",
+    "网易严选": "购物消费", "考拉": "购物消费", "海淘": "购物消费",
+    "蓝鲸优品": "购物消费",
+    # === 住房物业 ===
+    "房租": "住房物业", "物业": "住房物业", "链家": "住房物业",
+    "贝壳": "住房物业", "中介": "住房物业", "房产": "住房物业",
+    "水电": "水电燃气", "电费": "水电燃气", "水费": "水电燃气",
+    "燃气": "水电燃气", "煤气": "水电燃气", "暖气": "水电燃气",
+    "供暖": "水电燃气", "天然气": "水电燃气",
+    # === 通讯网络 ===
+    "话费": "通讯网络", "手机充值": "通讯网络", "宽带": "通讯网络",
+    "流量": "通讯网络", "中国移动": "通讯网络", "中国联通": "通讯网络",
+    "中国电信": "通讯网络", "联通": "通讯网络", "电信": "通讯网络",
+    "移动": "通讯网络",
+    # === 休闲娱乐 ===
+    "电影": "休闲娱乐", "猫眼": "休闲娱乐", "淘票票": "休闲娱乐",
+    "演唱会": "休闲娱乐", "演出": "休闲娱乐", "展览": "休闲娱乐",
+    "博物馆": "休闲娱乐", "科技馆": "休闲娱乐", "游乐园": "休闲娱乐",
+    "景区": "休闲娱乐", "旅游": "休闲娱乐", "酒店": "休闲娱乐",
+    "民宿": "休闲娱乐", "hotel": "休闲娱乐", "lisboa": "休闲娱乐",
+    "携程": "休闲娱乐", "去哪儿": "休闲娱乐", "飞猪": "休闲娱乐",
+    "腾讯视频": "休闲娱乐", "爱奇艺": "休闲娱乐", "优酷": "休闲娱乐",
+    "哔哩哔哩": "休闲娱乐", "网易云": "休闲娱乐", "qq音乐": "休闲娱乐",
+    "spotify": "休闲娱乐", "netflix": "休闲娱乐", "youtube": "休闲娱乐",
+    "steam": "休闲娱乐", "游戏": "休闲娱乐", "switch": "休闲娱乐",
+    "ps5": "休闲娱乐", "psn": "休闲娱乐", "xbox": "休闲娱乐",
+    "playstation": "休闲娱乐", "nintendo": "休闲娱乐",
+    "ktv": "休闲娱乐", "麻将": "休闲娱乐", "棋牌": "休闲娱乐",
+    "玄妙观": "休闲娱乐", "道观": "休闲娱乐", "寺": "休闲娱乐",
+    "摄影": "休闲娱乐", "photo": "休闲娱乐",
+    "迪士尼": "休闲娱乐", "disney": "休闲娱乐",
+    "汤泉": "休闲娱乐", "水裹": "休闲娱乐", "温泉": "休闲娱乐",
+    "旅行社": "休闲娱乐", "旅途": "休闲娱乐",
+    "捷安特": "运动健身", "giant": "运动健身",
+    "单车": "运动健身", "骑行": "运动健身",
+    # === 医疗健康 ===
+    "医院": "医疗健康", "诊所": "医疗健康", "药房": "医疗健康",
+    "大药房": "医疗健康", "药店": "医疗健康", "藥房": "医疗健康",
+    "大藥房": "医疗健康", "藥店": "医疗健康",
+    "体检": "医疗健康", "牙科": "医疗健康",
+    "眼科": "医疗健康", "疫苗": "医疗健康", "医保": "医疗健康",
+    "健康": "医疗健康", "口罩": "医疗健康",
+    "诊间付费": "医疗健康", "就诊": "医疗健康",
+    "曙光": "医疗健康", "门诊": "医疗健康",
+    # === 教育学习 ===
+    "书": "教育学习", "课程": "教育学习", "培训": "教育学习",
+    "考试": "教育学习", "学费": "教育学习", "教材": "教育学习",
+    "文具": "教育学习", "学校": "教育学习", "大学": "教育学习",
+    "考研": "教育学习", "考证": "教育学习",
+    # === 服饰美容 ===
+    "理发": "服饰美容", "美容": "服饰美容", "护肤": "服饰美容",
+    "化妆": "服饰美容", "美甲": "服饰美容", "美发": "服饰美容",
+    "优衣库": "服饰美容", "zara": "服饰美容", "hm": "服饰美容",
+    "nike": "服饰美容", "adidas": "服饰美容", "李宁": "服饰美容",
+    "cosmetic": "服饰美容", "sa sa": "服饰美容",
+    "服装店": "服饰美容", "服装": "服饰美容", "服饰": "服饰美容",
+    "迪科菲": "服饰美容",
+    # === 数码电器 ===
+    "小米": "数码电器", "华为": "数码电器", "苹果": "数码电器",
+    "vivo": "数码电器", "oppo": "数码电器", "三星": "数码电器",
+    "apple": "数码电器", "数码": "数码电器", "电器": "数码电器",
+    "手机": "数码电器", "电脑": "数码电器", "平板": "数码电器",
+    "耳机": "数码电器",
+    # === 汽车养护 ===
+    "洗车": "汽车养护", "保养": "汽车养护", "维修": "汽车养护",
+    "修车": "汽车养护", "轮胎": "汽车养护", "车险": "汽车养护",
+    "年检": "汽车养护", "4s": "汽车养护",
+    # === 运动健身 ===
+    "健身": "运动健身", "运动": "运动健身", "游泳": "运动健身",
+    "瑜伽": "运动健身", "跑步": "运动健身", "keep": "运动健身",
+    "健身房": "运动健身", "篮球": "运动健身", "足球": "运动健身",
+    # === 宠物 ===
+    "宠物": "宠物", "猫": "宠物", "狗": "宠物", "兽医": "宠物",
+    # === 人情往来 ===
+    "红包": "转账红包", "礼": "人情往来", "份子": "人情往来",
+    "婚": "人情往来", "满月": "人情往来", "寿": "人情往来",
+    # === 知识付费 ===
+    "订阅": "知识付费", "会员": "知识付费", "vip": "知识付费",
+    "知识星球": "知识付费", "下载币": "知识付费",
+    "极速下载": "知识付费", "比特浏览器": "知识付费",
+    "技术邻": "知识付费", "充值": "知识付费",
+    # === 居家生活 ===
+    "快递": "居家生活", "家政": "居家生活", "保洁": "居家生活",
+    "搬家": "居家生活", "装修": "居家生活", "家居": "居家生活",
+    "宜家": "居家生活", "家具": "居家生活", "家电": "居家生活",
+    "丰巢": "居家生活", "寄件": "居家生活", "快件保管": "居家生活",
+    "超重补差": "居家生活", "打印店": "居家生活", "打印": "居家生活",
+    "图文": "居家生活", "复印": "居家生活",
+    "工银e缴费": "居家生活", "缴费": "居家生活", "一网通办": "居家生活",
+    "出入境": "居家生活", "啄木鸟": "居家生活", "清洗": "居家生活",
+    "卫浴安装": "居家生活", "百安居": "居家生活",
+    "京邦达": "居家生活", "种业": "居家生活",
+    "deepseek": "知识付费", "深度求索": "知识付费",
+    "api": "知识付费",
+}
 
-def auto_categorize(db: Session, transaction) -> int | None:
+INCOME_KEYWORDS: dict[str, str] = {
+    "工资": "工资收入", "薪": "工资收入", "薪酬": "工资收入",
+    "奖金": "奖金绩效", "绩效": "奖金绩效", "年终": "奖金绩效",
+    "提成": "奖金绩效", "佣金": "奖金绩效",
+    "兼职": "兼职收入", "劳务": "兼职收入", "稿费": "兼职收入",
+    "项目": "兼职收入", "仿真": "兼职收入", "ncode": "兼职收入",
+    "投资收益": "投资收益", "理财收益": "投资收益", "基金": "投资收益",
+    "股票": "投资收益", "分红": "投资收益", "股息": "投资收益",
+    "余额宝": "利息收益", "零钱通": "利息收益", "利息": "利息收益",
+    "结息": "利息收益", "网商银行": "利息收益",
+    "房租": "房租收入", "租金": "房租收入",
+    "红包": "礼金红包", "礼金": "礼金红包", "压岁": "礼金红包",
+    "退款": "退款返利", "返利": "退款返利", "返现": "退款返利",
+    "报销": "报销款", "补贴": "报销款", "津贴": "报销款",
+    "转入": "转账收入", "转账": "转账收入", "汇款": "转账收入",
+    "收款": "转账收入", "代付": "转账收入",
+    "硬盘": "其他收入", "支架": "其他收入", "机械硬盘": "其他收入",
+    "格式转换": "其他收入", "文件转换": "其他收入",
+}
+
+IGNORE_KEYWORDS: dict[str, str] = {
+    "信用卡还款": "信用卡还款", "还信用卡": "信用卡还款",
+    "还款": "借贷还款", "借款": "借贷还款", "贷款": "借贷还款",
+    "借呗": "借贷还款", "花呗": "借贷还款", "微粒贷": "借贷还款",
+    "理财通": "投资理财", "零钱通转入": "账户存取", "零钱通转出": "账户存取",
+    "余额宝转入": "账户存取", "余额宝转出": "账户存取",
+    "充值": "账户存取", "提现": "账户存取", "取现": "账户存取",
+    "存款": "账户存取", "取款": "账户存取",
+    "保险": "投资理财", "保费": "投资理财",
+    "内部转账": "内部转账", "本人": "内部转账",
+}
+
+
+def _keyword_match(text: str, keywords: dict[str, str]) -> str | None:
+    """Match text against keyword dict, return category name on first match."""
+    if not text:
+        return None
+    text_lower = text.lower()
+    for keyword, category_name in keywords.items():
+        if keyword.lower() in text_lower:
+            return category_name
+    return None
+
+
+def _lookup_category(db: Session, name: str, cat_type: str, user_id: int) -> int | None:
+    """Find a category by name + type + user_id, or create it."""
+    cat = db.query(Category).filter(
+        Category.name == name,
+        Category.type == cat_type,
+        Category.user_id == user_id,
+    ).first()
+    if cat:
+        return cat.id
+    return None
+
+
+def auto_categorize(db: Session, transaction, user_id: int | None = None) -> int | None:
     """
-    Run rules (ordered by priority DESC) against one transaction.
-    Only matches rules whose category type corresponds to the transaction direction.
-    Returns category_id on first match, or None.
+    Categorize a transaction using rules + keyword fallback.
+    Returns category_id or None.
     """
+    if user_id is None:
+        user_id = getattr(transaction, 'user_id', None)
+    if not user_id:
+        return None
+
     allowed_type = DIRECTION_TO_CATEGORY_TYPE.get(transaction.direction)
     if not allowed_type:
         return None
 
+    # Step 1: Try rule-based matching (user-scoped)
     rules = (
         db.query(CategoryRule)
         .join(Category, CategoryRule.category_id == Category.id)
-        .filter(Category.type == allowed_type)
+        .filter(Category.type == allowed_type, CategoryRule.user_id == user_id)
         .order_by(CategoryRule.priority.desc())
         .all()
     )
     for rule in rules:
         field_val = ""
         if rule.field == "counterparty":
-            field_val = transaction.counterparty or ""
+            field_val = (transaction.counterparty or "").strip()
         elif rule.field == "product_desc":
-            field_val = transaction.product_desc or ""
+            field_val = (transaction.product_desc or "").strip()
         elif rule.field == "transaction_type":
-            field_val = transaction.transaction_type or ""
-
+            field_val = (transaction.transaction_type or "").strip()
         if not field_val:
             continue
-
         if rule.match_mode == "exact":
             if field_val == rule.pattern:
                 return rule.category_id
@@ -51,18 +283,38 @@ def auto_categorize(db: Session, transaction) -> int | None:
                     return rule.category_id
             except re.error:
                 continue
-        else:  # contains (default)
+        else:  # contains
             if rule.pattern.lower() in field_val.lower():
                 return rule.category_id
 
-    return None
+    # Step 2: Keyword fallback
+    search_text = " ".join([
+        transaction.product_desc or "",
+        transaction.counterparty or "",
+        transaction.transaction_type or "",
+    ])
+
+    if allowed_type == "expense":
+        cat_name = _keyword_match(search_text, EXPENSE_KEYWORDS)
+        if not cat_name:
+            cat_name = "其他支出"
+    elif allowed_type == "income":
+        cat_name = _keyword_match(search_text, INCOME_KEYWORDS)
+        if not cat_name:
+            cat_name = "其他收入"
+    else:
+        cat_name = _keyword_match(search_text, IGNORE_KEYWORDS)
+        if not cat_name:
+            cat_name = "其他不计收支"
+
+    return _lookup_category(db, cat_name, allowed_type, user_id)
 
 
-def batch_auto_categorize(db: Session, transactions: list) -> int:
+def batch_auto_categorize(db: Session, transactions: list, user_id: int) -> int:
     """Auto-categorize a list of transactions. Returns count of categorized."""
     count = 0
     for txn in transactions:
-        cat_id = auto_categorize(db, txn)
+        cat_id = auto_categorize(db, txn, user_id)
         if cat_id is not None:
             txn.category_id = cat_id
             count += 1
