@@ -55,7 +55,7 @@ export default function CategoryRanking({ catData, selectedCategory, onSelect, t
                 {i + 1}
               </div>
 
-              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 130, flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{
                   display: "inline-block", width: 10, height: 10, borderRadius: "50%",
                   background: cat.category_color, flexShrink: 0,
