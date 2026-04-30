@@ -172,7 +172,7 @@ def import_rules(data: ImportRequest, db: Session = Depends(get_db),
         Transaction.category_id.is_(None),
         Transaction.user_id == current_user.id,
     ).all()
-    applied = batch_auto_categorize(db, uncat)
+    applied = batch_auto_categorize(db, uncat, current_user.id)
 
     return ApiResponse(
         data={
@@ -257,7 +257,7 @@ def apply_all_rules(db: Session = Depends(get_db),
         Transaction.user_id == current_user.id,
     ).all()
     total = len(uncat)
-    applied = batch_auto_categorize(db, uncat)
+    applied = batch_auto_categorize(db, uncat, current_user.id)
     return ApiResponse(data={"total_uncategorized": total, "categorized": applied},
                        message=f"已为 {applied} 笔交易匹配分类（共 {total} 笔未分类）")
 
@@ -297,7 +297,7 @@ def add_rule(cat_id: int, data: CategoryRuleCreate, db: Session = Depends(get_db
         Transaction.category_id.is_(None),
         Transaction.user_id == current_user.id,
     ).all()
-    applied = batch_auto_categorize(db, uncat)
+    applied = batch_auto_categorize(db, uncat, current_user.id)
 
     return ApiResponse(data={
         "rule": CategoryRuleOut.model_validate(rule).model_dump(),
